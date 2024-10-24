@@ -30,7 +30,8 @@ from transformers.utils import logging
 from transformers import AutoTokenizer, AutoModelForCausalLM  # isort: skip
 
 logger = logging.get_logger(__name__)
-model_name_or_path="/root/finetune/models/internlm2-chat-7b"
+
+model_name_or_path="Shanghai_AI_Laboratory/internlm2-chat-7b"
 
 @dataclass
 class GenerationConfig:
@@ -231,12 +232,15 @@ def combine_history(prompt):
 
 
 def main():
-    st.title('internlm2_5-7b-chat-assistant')
-
     # torch.cuda.empty_cache()
     print('load model begin.')
     model, tokenizer = load_model()
     print('load model end.')
+
+    user_avator = 'assets/user.png'
+    robot_avator = 'assets/robot.png'
+
+    st.title('internlm2_5-7b-chat-assistant')
 
     generation_config = prepare_generation_config()
 
@@ -252,27 +256,23 @@ def main():
     # Accept user input
     if prompt := st.chat_input('What is up?'):
         # Display user message in chat message container
-
-        with st.chat_message('user', avatar='user'):
-
+        with st.chat_message('user', avatar=user_avator):
             st.markdown(prompt)
         real_prompt = combine_history(prompt)
         # Add user message to chat history
         st.session_state.messages.append({
             'role': 'user',
             'content': prompt,
-            'avatar': 'user'
+            'avatar': user_avator
         })
 
-        with st.chat_message('robot', avatar='assistant'):
-
+        with st.chat_message('robot', avatar=robot_avator):
             message_placeholder = st.empty()
             for cur_response in generate_interactive(
                     model=model,
                     tokenizer=tokenizer,
                     prompt=real_prompt,
                     additional_eos_token_id=92542,
-                    device='cuda:0',
                     **asdict(generation_config),
             ):
                 # Display robot response in chat message container
@@ -282,11 +282,10 @@ def main():
         st.session_state.messages.append({
             'role': 'robot',
             'content': cur_response,  # pylint: disable=undefined-loop-variable
-            'avatar': 'assistant',
+            'avatar': robot_avator,
         })
         torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':
     main()
-
